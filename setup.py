@@ -3,14 +3,13 @@
 from distutils.core import setup
 
 setup(
-    name='HiTIME',
+    name='hitime',
     version='1.0.0',
     author='Andrew Isaac',
     author_email='aisaac@unimelb.edu.au',
-    packages=['HiTIME'],
-    scripts=[''],
+    packages=['hitime'],
     entry_points={
-        'console_scripts': ['hitme = hitime.hitime:main']
+        'console_scripts': ['hitime = hitime.hitime:main']
     },
     url='https://github.com/bjpop/HiTIME',
     license='LICENSE.txt',
@@ -20,11 +19,8 @@ setup(
         'HiTIME searches for twin-ion pairs in high resolution Liquid Chromatography '
         'Mass Spectrometry (LCMS) data.'),
     install_requires=[
-        "numpy >= 1.7.1",
-        "scipy >= 0.12.0",
-        "lxml >= 3.2.3",
-        "pymzml >= 0.7.4",
-        "Rtree >= 0.7.0",
-        "matplotlib >= 1.3.1"
+        "numpy == 1.7.1",
+        "lxml == 3.2.3",
+        "pymzml == 0.7.4",
     ],
 )
