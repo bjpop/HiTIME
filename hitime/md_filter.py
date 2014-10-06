@@ -3,11 +3,9 @@
 import resource
 import numpy as np
 import math
-#from scipy.stats import t as tdist
 import logging
 #import numexpr as ne
 #from bx.intervals.intersection import IntervalTree
-from scipy.stats import norm
 
 #from memory_profiler import profile
 
@@ -259,7 +257,6 @@ def scoreSpectra(spectra, options):
 
 # this looks worse
 #    Zscore = np.minimum(zABA0, zABB0)
-#    score = norm.cdf(Zscore)
     minScore = np.minimum(zABA0, zABB0, zAB1r).clip(min=0.0)
     score = np.vstack((minScore, correlAB, correlA0, correlB0, correl1r)).T
 
