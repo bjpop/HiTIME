@@ -1,6 +1,6 @@
 #!/bin/env python
 
-from lxml import etree
+#from lxml import etree
 import sys
 import resource
 import base64
@@ -12,9 +12,10 @@ import csv
 import logging
 import os
 import os.path
-import pymzml
+#import pymzml
 from collections import deque
 import resource
+import pyopenms
 
 # add dir of this (and following) file to path
 sys.path.append(os.path.realpath(__file__))
@@ -76,6 +77,7 @@ class Spectrum(object):
         self.id = int(id)
 
 
+'''
 def parseMZDATA(options):
     filename = options.inputFile
     result = []
@@ -92,6 +94,7 @@ def parseMZDATA(options):
         time = getSpectrumTime(spectrum)
         result.append(Spectrum(spectrum.get('id'), time, mzData, intData))
     return result
+'''
 
 
 def writeResults(stream, spectrum, scores=None):
@@ -106,7 +109,6 @@ def writeResults(stream, spectrum, scores=None):
         rt = spectrum.time
         for mz, amp in zip(spectrum.mzs, spectrum.intensities):
             print >> stream, '{}, {}, {}'.format(rt, mz, amp)
-
 
 def MZMLtoSpectrum(options):
     filename = options.inputFile
@@ -139,6 +141,75 @@ def MZMLtoSpectrum(options):
         exit("Zero spectra read from mz data file, did you specify the wrong input format?")
     logging.info('mzdata input file parsed, {0} ({1}) spectra (data points) read in'.format(n+1, points))
     logging.info('time delta: %g, mean signal: %g' % (delta_time, mean))
+
+
+def MZMLtoSpectrum(options):
+    filename = options.inputFile
+    delta_time = 0
+    time_prev = 0
+    points = 0
+    mean = 0
+    time = 0
+    mzml_file = pyopenms.MzMLFile()
+    experiment = pyopenms.MSExperiment()
+    mzml_file.load(filename, experiment)
+    for n,spectrum in enumerate(experiment):
+        (mzData, intData) = spectrum.get_peaks()
+        points += len(intData)
+        mean += sum(intData)
+        try:
+            time = spectrum.getRT()
+            delta_time += (time - time_prev - delta_time)/(n+1)  # incremental update to mean delta_time
+            time_prev = time
+        except KeyError:
+            time_prev = time
+            if delta_time > 0:
+                time += delta_time
+            else:
+                time += 1.0
+        yield Spectrum(n, time, mzData, intData)
+
+    if points > 0:
+        mean /= float(points)
+    else:
+        exit("Zero spectra read from mz data file, did you specify the wrong input format?")
+    logging.info('mzdata input file parsed, {0} ({1}) spectra (data points) read in'.format(n+1, points))
+    logging.info('time delta: %g, mean signal: %g' % (delta_time, mean))
+
+
+'''
+def MZMLtoSpectrum(options):
+    filename = options.inputFile
+    delta_time = 0
+    time_prev = 0
+    points = 0
+    mean = 0
+    time = 0
+    msrun = pymzml.run.Reader(filename)
+    for n,spectrum in enumerate(msrun):
+        mzData = np.array(spectrum.mz, dtype="float32")
+        intData = np.array(spectrum.i, dtype="uint64")
+        points += len(intData)
+        mean += sum(intData)
+        try:
+            time = spectrum['MS:1000016']
+            delta_time += (time - time_prev - delta_time)/(n+1)  # incremental update to mean delta_time
+            time_prev = time
+        except KeyError:
+            time_prev = time
+            if delta_time > 0:
+                time += delta_time
+            else:
+                time += 1.0
+        yield Spectrum(n, time, mzData, intData)
+
+    if points > 0:
+        mean /= float(points)
+    else:
+        exit("Zero spectra read from mz data file, did you specify the wrong input format?")
+    logging.info('mzdata input file parsed, {0} ({1}) spectra (data points) read in'.format(n+1, points))
+    logging.info('time delta: %g, mean signal: %g' % (delta_time, mean))
+'''
 
 
 def nextWindow(reader, options, half_window):

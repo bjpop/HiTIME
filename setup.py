@@ -19,8 +19,9 @@ setup(
         'HiTIME searches for twin-ion pairs in high resolution Liquid Chromatography '
         'Mass Spectrometry (LCMS) data.'),
     install_requires=[
-        "numpy == 1.7.1",
-        "lxml == 3.2.3",
-        "pymzml == 0.7.4",
+        "numpy",
+        #"lxml == 3.2.3",
+        #"pymzml == 0.7.4",
+        "pyopenms"
     ],
 )
