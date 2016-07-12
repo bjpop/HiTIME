@@ -16,6 +16,7 @@ import os.path
 from collections import deque
 import resource
 import pyopenms
+import copy
 
 # add dir of this (and following) file to path
 sys.path.append(os.path.realpath(__file__))
@@ -70,11 +71,12 @@ def getSpectrumTime(spectrum):
 # an encapsulation of a single Spectrum element containing its
 # identity, decoded mz data and decoded intensity data
 class Spectrum(object):
-    def __init__(self, id, time, mzs, intensities):
+    def __init__(self, id, time, mzs, intensities, original):
         self.time = time
         self.mzs = mzs
         self.intensities = intensities
         self.id = int(id)
+        self.original = original
 
 
 '''
@@ -96,7 +98,27 @@ def parseMZDATA(options):
     return result
 '''
 
+def writeResults(output_experiment, spectrum, scores):
+    new_spectrum = copy.deepcopy(spectrum.original)
+    scores = scores[:,0]
+    #print(type(scores))
+    #print(scores)
+    #print(len(scores))
 
+    new_spectrum.set_peaks((spectrum.mzs, scores))
+    #old_peaks = new_spectrum.get_peaks()
+    #old_mzs = old_peaks[0]
+    #old_ints = old_peaks[1]
+    #print(type(old_mzs))
+    #print(type(old_ints))
+    #print(old_mzs)
+    #print(old_ints)
+    #print(len(old_mzs))
+    #exit(1) 
+    #new_spectrum.set_peaks(new_spectrum.get_peaks())
+    output_experiment.addSpectrum(new_spectrum)
+
+'''
 def writeResults(stream, spectrum, scores=None):
     if scores is not None:
         rt = spectrum.time
@@ -109,7 +131,9 @@ def writeResults(stream, spectrum, scores=None):
         rt = spectrum.time
         for mz, amp in zip(spectrum.mzs, spectrum.intensities):
             print >> stream, '{}, {}, {}'.format(rt, mz, amp)
+'''
 
+'''
 def MZMLtoSpectrum(options):
     filename = options.inputFile
     delta_time = 0
@@ -141,6 +165,7 @@ def MZMLtoSpectrum(options):
         exit("Zero spectra read from mz data file, did you specify the wrong input format?")
     logging.info('mzdata input file parsed, {0} ({1}) spectra (data points) read in'.format(n+1, points))
     logging.info('time delta: %g, mean signal: %g' % (delta_time, mean))
+'''
 
 
 def MZMLtoSpectrum(options):
@@ -167,7 +192,7 @@ def MZMLtoSpectrum(options):
                 time += delta_time
             else:
                 time += 1.0
-        yield Spectrum(n, time, mzData, intData)
+        yield Spectrum(n, time, mzData, intData, spectrum)
 
     if points > 0:
         mean /= float(points)
@@ -216,8 +241,8 @@ def nextWindow(reader, options, half_window):
     '''
     Use iterators to serve up data when needed
     '''
-    pad_front = repeat(Spectrum(0, 0.0, [0.0], [0.0]), half_window + 1)  # extra one at start that gets ignored
-    pad_back = repeat(Spectrum(0, 0.0, [0.0], [0.0]), half_window)
+    pad_front = repeat(Spectrum(0, 0.0, [0.0], [0.0], None), half_window + 1)  # extra one at start that gets ignored
+    pad_back = repeat(Spectrum(0, 0.0, [0.0], [0.0], None), half_window)
     items = chain(pad_front, reader(options), pad_back)
     # 1st window
     data = list(islice(items, 0, 2 * half_window + 1 ))

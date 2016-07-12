@@ -6,8 +6,8 @@ import math
 import argparse
 import logging
 import time
-
 import numpy as np
+import pyopenms
 
 # add dir of this (and following) file to path
 sys.path.append(os.path.realpath(__file__))
@@ -164,7 +164,9 @@ def main(MPI=None):
 
     # read the input data file and extract useful contents
     if RANK == 0:
-        data_out = open(options.outputFile, "w")
+        #data_out = open(options.outputFile, "w")
+        output_file = pyopenms.MzMLFile()
+        output_experiment = pyopenms.MSExperiment()
         half_window = int(math.ceil(options.rtSigma * options.rtWidth / 2.355))
         logging.debug('half RT window {}'.format(half_window))
         if SIZE > 1:
@@ -181,7 +183,8 @@ def main(MPI=None):
                 raw_data, scores = COMM.recv(source=MPI.ANY_SOURCE, status=status)
                 source = status.Get_source()
             if raw_data is not None:
-                md_io.writeResults(data_out, raw_data, scores)
+                #md_io.writeResults(data_out, raw_data, scores)
+                md_io.writeResults(output_experiment, raw_data, scores)
 
             ## Read data chunk
             try:
@@ -206,6 +209,7 @@ def main(MPI=None):
                     raw_data = spectra
             if spectra is None:
                 done += 1   # can only ever close each worker once
+        output_file.store(options.outputFile, output_experiment)
     else:  # Worker
         scores = None
         raw = None
